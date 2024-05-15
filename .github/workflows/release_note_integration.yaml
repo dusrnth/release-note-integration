@@ -1,0 +1,26 @@
+name: 릴리즈 노트 자동 작성
+
+on:
+  push:
+    branches:
+      - proto
+
+jobs:
+  create_notion_page:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 깃 리포지토리 fetch 및 체크아웃
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 5  # 최근 5개 커밋만 가져옴
+
+      - name: 푸쉬된 모든 커밋 목록
+        id: get-commits
+        run: echo "commits=${{ join(github.event.commits.*.id, ',') }}" >> $GITHUB_OUTPUT
+
+      - name: 노션 페이지 생성 스크립트 실행
+        env:
+          NOTION_API_KEY: ${{ secrets.NOTION_API_KEY }}
+          NOTION_DATABASE_ID: ${{ secrets.NOTION_DATABASE_ID }}
+        run: |
+          python "$GITHUB_WORKSPACE/.github/scripts/main.py" "${{ steps.get-commits.outputs.commits }}"
